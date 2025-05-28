@@ -1837,6 +1837,86 @@ msgstr ""
 msgid "detail tech data bogus"
 msgstr "bidon"
 
+msgid "detail tech data caa caa-record"
+msgstr "Enregistrement : {record}"
+
+msgid "detail tech data caa caa_record"
+msgstr "enregistrement caa trouvé : {record}"
+
+msgid "detail tech data caa found-host"
+msgstr "CAA trouvé sur : {host}"
+
+msgid "detail tech data caa found_host"
+msgstr "CAA trouvé sur l'hôte {host}"
+
+msgid "detail tech data caa invalid-flags-reserved-bits"
+msgstr "Erreur : Indicateurs réservés invalides \"{flags}\""
+
+msgid "detail tech data caa invalid-parameter-validation-methods"
+msgstr "Erreur : Valeur 'validationmethods' invalide \"{parameter_value}\""
+
+msgid "detail tech data caa invalid-property-contactemail-value"
+msgstr "Erreur : Valeur 'contactemail' invalide \"{property_value}\""
+
+msgid "detail tech data caa invalid-property-contactphone-value"
+msgstr "Erreur : Valeur 'contactphone' invalide \"{property_value}\""
+
+msgid "detail tech data caa invalid-property-iodef-value"
+msgstr "Erreur : Valeur 'iodef' invalide \"{property_value}\""
+
+msgid "detail tech data caa invalid-property-issuemail-value"
+msgstr "Erreur : Valeur 'issuemail' invalide \"{property_value}\""
+
+msgid "detail tech data caa invalid-property-syntax"
+msgstr ""
+"Erreur : Caractère invalide \"{invalid_character}\" à la position "
+"{invalid_character_position} dans la valeur '{property_name}' \"{property_value}\""
+" "
+
+msgid "detail tech data caa invalid-reserved-property"
+msgstr "Erreur : Propriété réservée invalide \"{property_tag}\""
+
+msgid "detail tech data caa invalid-unknown-property"
+msgstr "Erreur : Propriété inconnue \"{property_tag}\""
+
+msgid "detail tech data caa invalid_flags_reserved_bits"
+msgstr "indicateurs_réservés_invalides {value}"
+
+msgid "detail tech data caa invalid_property_contactemail_value"
+msgstr "valeur_contactemail_propriété_invalide {value}"
+
+msgid "detail tech data caa invalid_property_contactphone_value"
+msgstr "valeur_contactphone_propriété_invalide {value}"
+
+msgid "detail tech data caa invalid_property_iodef_value"
+msgstr "valeur_iodef_propriété_invalide {value}"
+
+msgid "detail tech data caa invalid_property_issue_validation_method"
+msgstr "méthode_validation_issue_propriété_invalide {value}"
+
+msgid "detail tech data caa invalid_property_issuemail_value"
+msgstr "valeur_issuemail_propriété_invalide {value}"
+
+msgid "detail tech data caa invalid_property_syntax"
+msgstr ""
+"syntaxe_propriété_invalide nom {property_name} valeur {property_value} "
+"caractère invalide {invalid_character} à la pos {invalid_character_position}"
+
+msgid "detail tech data caa invalid_reserved_property"
+msgstr "propriété_réservée_invalide {value}"
+
+msgid "detail tech data caa invalid_unknown_property"
+msgstr "propriété_inconnue_invalide {value}"
+
+msgid "detail tech data caa missing-required-property-issue"
+msgstr "Erreur : Propriété 'issue' requise manquante"
+
+msgid "detail tech data caa not-found"
+msgstr "Erreur : CAA non trouvé"
+
+msgid "detail tech data caa not_found"
+msgstr "CAA non trouvé"
+
 msgid "detail tech data good"
 msgstr "bon"
 
