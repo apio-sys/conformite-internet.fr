@@ -1,5 +1,5 @@
-# SOME DESCRIPTIVE TITLE.
-# Copyright (C) 2021 Stichting Internet Standards platform
+# This is the FR translation file based on the original EN content from the Internet.nl Project.
+# Copyright (C) 2025 Apio systems.
 # This file is distributed under the same license as the Internet.nl package.
 #
 #, fuzzy
@@ -581,6 +581,12 @@ msgstr ""
 "recherches DNS autorisées. Chacun des termes SPF suivants compte comme une recherche DNS : "
 "`redirect`, `include`, `a`, `mx`, `ptr` et `exist`. Les termes SPF `all`, "
 "`ip4`, `ip6` et `exp` ne comptent pas comme des recherches DNS."
+
+msgid "detail mail auth spf-policy verdict redirect"
+msgstr ""
+"Votre politique SPF n'est *pas* suffisamment stricte. Le modificateur "
+"'redirect' dans votre enregistrement SPF pointe vers une politique SPF "
+"insuffisamment stricte ou un enregistrement SPF inexistant."
 
 msgid "detail mail dnssec exists exp"
 msgstr ""
@@ -2010,6 +2016,12 @@ msgstr "Recommandation : 'strict-origin-when-cross-origin' ne devrait pas être 
 msgid "detail tech data http-referrer-policy values"
 msgstr "Politique trouvée : {values}"
 
+msgid "detail tech data http-securitytxt bom_in_file"
+msgstr ""
+"Erreur : La signature de marque d'ordre d'octets (\"BOM\") ne doit pas "
+"apparaître au début du contenu qui doit être encodé en UTF-8 sous forme "
+"Net-Unicode."
+
 msgid "detail tech data http-securitytxt data_after_sig"
 msgstr ""
 "Erreur : Le security.txt signé ne doit pas contenir de données après la signature (ligne "
@@ -2025,6 +2037,12 @@ msgid "detail tech data http-securitytxt expired"
 msgstr ""
 "Erreur : La date et l'heure dans le champ 'Expires' ne doivent pas être dans le passé (ligne "
 "{line_no})."
+
+msgid "detail tech data http-securitytxt invalid_cert"
+msgstr ""
+"Erreur : security.txt doit être servi avec un certificat TLS valide.\n"
+"\n"
+"[Note : cette étiquette de contenu n'est actuellement pas utilisée. Voir #1046.]"
 
 msgid "detail tech data http-securitytxt invalid_charset"
 msgstr ""
@@ -2047,6 +2065,12 @@ msgstr ""
 
 msgid "detail tech data http-securitytxt invalid_media"
 msgstr "Erreur : Le type de média dans l'en-tête Content-Type doit être 'text/plain'."
+
+msgid "detail tech data http-securitytxt invalid_uri_scheme"
+msgstr ""
+"Erreur : L'accès au fichier security.txt doit utiliser le schéma HTTPS.\n"
+"\n"
+"[Note : cette étiquette de contenu n'est actuellement pas utilisée. Voir #1046.]"
 
 msgid "detail tech data http-securitytxt location"
 msgstr ""
@@ -2553,6 +2577,12 @@ msgstr "Votre site web sur IPv6 semble être le même que votre site web sur IPv
 msgid "detail web ipv6 web-ipv46 verdict notice"
 msgstr ""
 "Le contenu HTML de votre site web via IPv4 n'est *pas* le même via IPv6. "
+
+msgid "detail web ipv6 web-ipv46 verdict notice-status-code"
+msgstr ""
+"Votre site web via IPv6 semble identique via IPv4, mais le code de réponse "
+"HTTP est dans la plage 4xx ou 5xx. Ceci peut indiquer un problème de "
+"configuration."
 
 msgid "detail web ipv6 web-reach exp"
 msgstr ""
@@ -3794,6 +3824,22 @@ msgstr ""
 msgid "faqs badges title"
 msgstr "Utilisation des badges 100%"
 
+msgid "faqs batch-and-dashboard content"
+msgstr ""
+"En plus du site web pour tester des noms de domaine individuels, Internet.nl fournit également les outils suivants qui peuvent être utilisés pour tester plusieurs noms de domaine :\n"
+"\n"
+"- [API par lots](https://github.com/internetstandards/Internet.nl-API-docs)\n"
+"- [Tableau de bord web](https://dashboard.internet.nl)\n"
+"\n"
+"## Exemples d'utilisation\n"
+"Pour quelques exemples d'organisations utilisant l'API et le tableau de bord web d'Internet.nl, voir [\"Mesures utilisant Internet.nl\"](/faqs/measurements/).\n"
+"\n"
+"## Attribution\n"
+"Si vous réutilisez les résultats de test d'Internet.nl dans votre propre site web ou service, nous vous demandons aimablement de nous attribuer. Pour plus d'informations, voir [\"conditions d'utilisation\"](https://github.com/internetstandards/Internet.nl-API-docs/blob/main/terms-of-use.md) et [\"droits d'auteur\"](/copyright/)."
+
+msgid "faqs batch-and-dashboard title"
+msgstr "API par lots et tableau de bord web"
+
 #, md-format
 msgid "faqs content"
 msgstr ""
@@ -3978,6 +4024,21 @@ msgstr ""
 #, md-format
 msgid "faqs mailauth title"
 msgstr "Protection contre le phishing par email (DMARC, DKIM et SPF)"
+
+msgid "faqs measurements content"
+msgstr ""
+"L'[API par lots et le tableau de bord web](/faqs/batch-and-dashboard/) sont utilisés par des centaines d'utilisateurs. Certaines organisations réutilisent les résultats de test dans leurs propres sites web publics ou rapports. Voici quelques exemples.\n"
+"\n"
+"- [Basisbeveiliging](https://basisbeveiliging.nl/)\n"
+"- [CBS : Application des normes Internet pour les sites web d'entreprise](https://www.cbs.nl/nl-nl/longread/aanvullende-statistische-diensten/2024/toepassing-van-internetstandaarden-voor-websites-van-bedrijven-2023) [en néerlandais]\n"
+"- [Plateforme d'insights numériques](https://www.digitalinsightsplatform.nl/)\n"
+"- [Commission européenne : Site web de surveillance du déploiement des normes Internet de l'UE](https://ec.europa.eu/internet-standards/)\n"
+"- [Forum de normalisation des Pays-Bas : Mesure des normes de sécurité de l'information](https://www.forumstandaardisatie.nl/metingen/informatieveiligheidstandaarden) [en néerlandais]\n"
+"- [Internet Society Portugal : Observatório de Tecnologias da Internet Portuguesa](https://observatory.isoc.pt/) [en portugais]\n"
+"- [Registre néerlandais pour les noms de domaine gouvernementaux](https://organisaties.overheid.nl/domeinen) [en néerlandais]"
+
+msgid "faqs measurements title"
+msgstr "Mesures utilisant Internet.nl"
 
 #, md-format
 msgid "faqs report score content"
@@ -4858,6 +4919,14 @@ msgid "test mailipv6 warning summary"
 msgstr ""
 "*Pas* accessible via une adresse internet moderne, ou amélioration possible (IPv6)"
 
+msgid "test mailrpki error description"
+msgstr ""
+"Test pas encore prêt à être exécuté. Veuillez réessayer plus tard. Désolé "
+"pour le dérangement."
+
+msgid "test mailrpki error summary"
+msgstr "Test pas prêt à être exécuté (RPKI)"
+
 msgid "test mailrpki failed description"
 msgstr ""
 "Dommage ! Au moins une des adresses IP de vos serveurs de messagerie de réception "
@@ -5211,6 +5280,14 @@ msgstr ""
 msgid "test siteipv6 warning summary"
 msgstr ""
 "*Pas* accessible via une adresse internet moderne, ou amélioration possible (IPv6)"
+
+msgid "test siterpki error description"
+msgstr ""
+"Test pas encore prêt à être exécuté. Veuillez réessayer plus tard. Désolé "
+"pour le dérangement."
+
+msgid "test siterpki error summary"
+msgstr "Test pas prêt à être exécuté (RPKI)"
 
 msgid "test siterpki failed description"
 msgstr ""
