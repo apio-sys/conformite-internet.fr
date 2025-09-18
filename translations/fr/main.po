@@ -4198,11 +4198,11 @@ msgstr "Base de connaissances"
 
 #, md-format
 msgid "halloffame champions menu"
-msgstr "Champions!"
+msgstr "Champions !"
 
 #, md-format
 msgid "halloffame champions subtitle"
-msgstr "100% in website *and* email test"
+msgstr "100% au test de site web *et* email"
 
 #, md-format
 msgid "halloffame champions text"
@@ -4212,7 +4212,7 @@ msgstr ""
 
 #, md-format
 msgid "halloffame champions title"
-msgstr "The best - champions!"
+msgstr "Les meilleurs - champions !"
 
 msgid "halloffame mail badge"
 msgstr "Badge avec le texte : score de 100% au test e-mail"
