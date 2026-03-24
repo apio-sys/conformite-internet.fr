@@ -34,6 +34,7 @@ services:
       - MONITORING_AUTH_RAW
       - AUTH_ALL_URLS
       - ALLOW_LIST
+      - ROUTINATOR_ALLOW_LIST
       # required for authentication.sh to restrict access when debug is on
       - DEBUG
       - ENABLE_BATCH
@@ -838,6 +839,13 @@ services:
 
     profiles:
       - monitoring
+
+    healthcheck:
+      # container image includes the test command, setting interval and start_interval here
+      interval: $HEALTHCHECK_INTERVAL
+      start_interval: $HEALTHCHECK_START_INTERVAL
+      start_period: 1m
+      retries: 10
 
   celery-exporter:
     platform: linux/amd64
