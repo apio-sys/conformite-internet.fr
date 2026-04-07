@@ -41,7 +41,6 @@ from sslyze import (
 )
 
 from sslyze.errors import (
-    ServerRejectedTlsHandshake,
     TlsHandshakeTimedOut,
     ConnectionToServerFailed,
     ServerHostnameCouldNotBeResolved,
@@ -347,7 +346,11 @@ def cert_checks(hostname: str, mode: ChecksMode, af_ip_pair=None, *args, **kwarg
     if result.scan_status == ServerScanStatusEnum.ERROR_NO_CONNECTIVITY:
         log.info(f"sslyze scan for cert on {hostname} {af_ip_pair} {mode} failed: no connectivity")
         return dict(tls_cert=False)
-    raise_sslyze_errors(result)
+    try:
+        raise_sslyze_errors(result)
+    except TLSException:
+        log.info(f"sslyze scan for cert on {hostname} {af_ip_pair} {mode} failed: certificate parsing error")
+        return dict(tls_cert=False)
 
     if mode == ChecksMode.WEB:
         trusted_score_good = scoring.WEB_TLS_TRUSTED_GOOD
@@ -470,14 +473,13 @@ def check_pubkey(certificates: list[Certificate], mode: ChecksMode):
 
         common_name = get_common_name(cert)
         public_key = cert.public_key()
-        key_type = type(public_key)
         curve = None
         if hasattr(public_key, "curve"):
             curve = public_key.curve.__class__
 
         is_good = (
             (isinstance(public_key, rsa.RSAPublicKey) and public_key.key_size >= CERT_RSA_MIN_GOOD_KEY_SIZE)
-            or (key_type in CERT_CURVES_GOOD)
+            or isinstance(public_key, tuple(CERT_CURVES_GOOD))
             or (isinstance(public_key, EllipticCurvePublicKey) and curve in CERT_EC_CURVES_GOOD)
         )
 
@@ -485,7 +487,7 @@ def check_pubkey(certificates: list[Certificate], mode: ChecksMode):
             continue
 
         key_size = getattr(public_key, "key_size", None)
-        message = f"{common_name}: {key_type.__name__}"
+        message = f"{common_name}: {type(public_key).__name__}"
         if key_size is not None:
             message += f"-{key_size}"
         if curve:
@@ -955,8 +957,10 @@ def _test_connection_with_limited_sigalgs(
         # Note that while we can double-check this for the digest hash, we cannot check it for EVP PKEY.
         if sigalg_nid in [sa[0] for sa in sigalgs]:
             return sigalg_nid
-    except (ClientCertificateRequested, ServerRejectedTlsHandshake, TlsHandshakeTimedOut, OpenSSLError):
+    except ClientCertificateRequested:
         pass
+    except (ConnectionToServerFailed, OpenSSLError, ValueError) as exc:
+        log.info(f"Sigalg test for {server_connectivity_info.server_location.hostname} failed: {exc}")
     finally:
         ssl_connection.close()
 
@@ -1065,7 +1069,7 @@ def find_most_preferred_cipher_suite(
         ssl_connection.connect()
     except ClientCertificateRequested:
         pass
-    except (ServerRejectedTlsHandshake, TlsHandshakeTimedOut) as exc:
+    except ConnectionToServerFailed as exc:
         raise TLSException(
             f"Unable to connect with (previously accepted) cipher suites {suite_names} to determine cipher order: {exc}"
         )

@@ -7,6 +7,7 @@ DNSDIR=$(REMOTEDATADIR)/dns
 
 # default version if nothing is provided by environment
 RELEASE ?= 0.0.0-dev0
+SCM_VERSION ?= ${RELEASE}
 
 # directories used to find python sources for things like linting etc
 pysrcdirs = internetnl tests interface checks integration_tests docker
@@ -113,21 +114,23 @@ DOCKER_COMPOSE_TEST_CMD=COMPOSE_FILE=docker/compose.yaml:docker/compose.test.yam
 DOCKER_COMPOSE_TOOLS_CMD=COMPOSE_FILE=docker/compose.tools.yaml docker compose
 
 build: ## build all docker images
-	${DOCKER_COMPOSE_BUILD_CMD} build ${build_args} --build-arg=RELEASE=${RELEASE} ${services}
+	${DOCKER_COMPOSE_BUILD_CMD} build ${build_args} --build-arg=RELEASE=${RELEASE} --build-arg=SCM_VERSION=${SCM_VERSION} ${services}
 
 build-no-cache: build ## build all docker images without using cache
 build-no-cache: build_args=--no-cache
 
 up: ## bring up an environment, and keep it running in the background, use env=x for a specific environment (test, dev)
 	if ! ${DOCKER_COMPOSE_UP_PULL_CMD} up --wait --no-build --remove-orphans --timeout=0 ${services}; then \
-  	 docker logs $$(docker compose  --env-file=docker/defaults.env --env-file=docker/test.env ps --filter status=exited -q); exit 1; \
+  	 docker logs $$(docker compose  --env-file=docker/defaults.env --env-file=docker/${environment}.env ps --filter status=exited -q); exit 1; \
 	fi
 	@if [ "${environment}" = "test" ]; then echo -e "\n🚀 Running on http://localhost:8081"; fi
 	@if [ "${environment}" = "develop" ]; then echo -e "\n🚀 Running on http://localhost:8080"; fi
 	@if [ "${environment}" = "batch-test" ]; then echo -e "\n🚀 Running on http://localhost:8081"; fi
 
 up-no-wait: ## bring up an environment but don't wait for it to be ready
-	${DOCKER_COMPOSE_UP_PULL_CMD} up --detach --no-build --remove-orphans --timeout=0 ${services}
+	if ! ${DOCKER_COMPOSE_UP_PULL_CMD} up --detach --no-build --remove-orphans --timeout=0 ${services}; then \
+  	 docker logs $$(docker compose  --env-file=docker/defaults.env --env-file=docker/${environment}.env ps --filter status=exited -q); exit 1; \
+	fi
 
 run: ## bring up an environment but run it in the foreground with logging enabled, ctrl-c to bring the environment down
 	${DOCKER_COMPOSE_UP_PULL_CMD} up --watch --remove-orphans --timeout=0 ${services}
