@@ -514,27 +514,34 @@ code {
   color: var(--apio-text-muted);
 }
 
-/* Score bar */
+/* Score bar — .block prefix beats alt.css's .meter { background: white url(...) } */
 .score-container {
   border-color: var(--apio-border);
 }
-.meter {
+.block .meter {
   background-color: var(--apio-dark);
+  background-image: none;
 }
 
-/* Individual test result rows */
+/* Individual test result rows
+   alt.css is injected dynamically after this file — use .block prefix
+   to get specificity 0,2,0 and beat alt.css's 0,1,0 background shorthand */
 .testresults {
   background: var(--apio-mid);
   color: var(--apio-text);
 }
-.testresult {
+.block .testresult {
   background-color: var(--apio-dark);
   border-top-color: var(--apio-border);
   border-bottom-color: var(--apio-border);
 }
-.faq-subtest,
-.faq-test {
+.block .faq-subtest,
+.block .faq-test {
   background-color: var(--apio-dark);
+}
+/* not-tested link is grey in alt.css — lighten for dark bg */
+.testresult.not-tested h3 a {
+  color: var(--apio-text-muted);
 }
 
 /* Accordion section dividers */

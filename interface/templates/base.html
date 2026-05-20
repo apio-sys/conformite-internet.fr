@@ -30,6 +30,7 @@
 </head>
 <body class="{{pageclass}}">
   <div class="hidethis" aria-hidden="true">
+    <img id="flag" src="{% static "clear.gif" %}" alt="">
     <span id="matomo-url">{{"MATOMO_URL"|get_settings_value}}</span>
     <span id="matomo-siteid">{{"MATOMO_SITEID"|get_settings_value}}</span>
     <span id="matomo-subdomain-tracking">{{"MATOMO_SUBDOMAIN_TRACKING"|get_settings_value}}</span>
@@ -41,7 +42,7 @@
     <div class="wrap">
       <div id="masthead">
         <a href="https://apio.systems/" title="Apio systems" target="_blank" rel="noopener noreferrer">
-          <img id="apio-logo" src="{% static 'logo-apio.svg' %}" alt="Apio systems">
+          <img id="apio-logo" src="https://www.apio.systems/images/logo-horizontal.svg" alt="Apio systems">
         </a>
       </div>
 
