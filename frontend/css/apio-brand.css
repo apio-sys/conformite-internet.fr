@@ -348,7 +348,6 @@ aside a:hover,
 }
 
 /* ── Buttons — match apio-sys.fr "Nous contacter" style ── */
-.block button,
 .contains-button button {
   display: inline-flex;
   align-items: center;
@@ -367,7 +366,6 @@ aside a:hover,
   /* Override display:block and margin:auto from style.css */
   margin: 0;
 }
-.block button:hover,
 .contains-button button:hover {
   background-color: var(--apio-teal-light);
 }
@@ -551,14 +549,24 @@ code {
   border-top-color: var(--apio-border);
 }
 
-/* Accordion open/close toggle button */
+/* Accordion open/close toggle button — plain text style, not a CTA */
 .panel-button-container button {
+  display: inline;
+  background: transparent;
   color: var(--apio-accent);
   border-color: var(--apio-border);
-  background: transparent;
+  border-radius: 1px;
+  font-size: inherit;
+  font-weight: normal;
+  padding: 0;
+  margin: 2px;
 }
 .panel-button-container button:hover {
+  background: transparent;
   color: var(--apio-teal-light);
+}
+.panel-button-container button::after {
+  content: none;
 }
 
 /* Panel title links (the clickable test-item rows) */
@@ -585,4 +593,20 @@ table th {
 /* "In progress" probe list */
 .probing {
   color: var(--apio-text);
+}
+
+/* ── Test-in-progress page ── */
+/* style.css renders the waiting card as a white inner .wrap on a transparent block */
+main .wrap .block.fullwidth .wrap {
+  background: var(--apio-mid);
+  box-shadow: none;
+  border: 1px solid var(--apio-border);
+  border-radius: 16px;
+}
+/* The outer block has background:none at ≥740px — keep it that way */
+@media (min-width: 740px) {
+  main .wrap .block.fullwidth.center {
+    background: none;
+    box-shadow: none;
+  }
 }
