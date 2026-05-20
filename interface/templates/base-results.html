@@ -192,23 +192,6 @@
      </div>
 
 
-     <div class="block">
-     <section class="connectiontest">
-       <div class="title-and-explanation">
-         <h2>
-           {% include "string.html" with name="base test connection label" %}
-         </h2>
-       </div>
-       <form action="/connection/" method="POST" id="form-connection-test">
-         <div class="contains-button">
-           <button>
-             {% include "string.html" with name="base test start" %}
-           </button>
-         </div>
-       </form>
-     </section>
-     </div>
-
      {% block furthertesting %}
      {% endblock %}
    </aside>

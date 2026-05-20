@@ -500,3 +500,89 @@ code {
   background: rgba(255, 255, 255, 0.08);
   color: var(--apio-accent);
 }
+
+/* ── Results page ── */
+
+/* Overview block: summary links (IPv6, DNSSEC, …) */
+#testresults-overview a {
+  color: var(--apio-text);
+}
+#testresults-overview a:hover {
+  color: var(--apio-accent);
+}
+
+/* Retest / timestamp muted text */
+.retest-text {
+  color: var(--apio-text-muted);
+}
+
+/* Score bar */
+.score-container {
+  border-color: var(--apio-border);
+}
+.meter {
+  background-color: var(--apio-dark);
+}
+
+/* Individual test result rows */
+.testresults {
+  background: var(--apio-mid);
+  color: var(--apio-text);
+}
+.testresult {
+  background-color: var(--apio-dark);
+  border-top-color: var(--apio-border);
+  border-bottom-color: var(--apio-border);
+}
+.faq-subtest,
+.faq-test {
+  background-color: var(--apio-dark);
+}
+
+/* Accordion section dividers */
+.js .accordion {
+  border-bottom-color: var(--apio-border);
+}
+.accordion .panel-title a {
+  border-top-color: var(--apio-border);
+}
+.test-header hr {
+  background: var(--apio-border);
+  border-top-color: var(--apio-border);
+}
+
+/* Accordion open/close toggle button */
+.panel-button-container button {
+  color: var(--apio-accent);
+  border-color: var(--apio-border);
+  background: transparent;
+}
+.panel-button-container button:hover {
+  color: var(--apio-teal-light);
+}
+
+/* Panel title links (the clickable test-item rows) */
+.panel-title a {
+  color: var(--apio-text);
+}
+.panel-title a:hover,
+.panel-title a:focus,
+.panel-title a.active {
+  color: var(--apio-accent);
+}
+
+/* Open/close caret icon — dark PNG, invert to white */
+.panel-title a .icon img {
+  filter: brightness(0) invert(1);
+  opacity: 0.75;
+}
+
+/* Table borders inside results */
+table th {
+  border-bottom-color: var(--apio-border);
+}
+
+/* "In progress" probe list */
+.probing {
+  color: var(--apio-text);
+}
