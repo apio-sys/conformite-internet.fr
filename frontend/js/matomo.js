@@ -24,18 +24,6 @@ function matomoGeneratedCode(disableCookies) {
 }
 
 if ("" != $("#matomo-siteid").text()) {
-  /* Do Not Track detection based on https://dev.to/corbindavenport/how-to-correctly-check-for-do-not-track-with-javascript-135d */
-  if (window.doNotTrack || navigator.doNotTrack || navigator.msDoNotTrack || 'msTrackingProtectionEnabled' in window.external) {
-    /* The browser supports Do Not Track!*/
-    if (window.doNotTrack == "1" || navigator.doNotTrack == "yes" || navigator.doNotTrack == "1" || navigator.msDoNotTrack == "1" || ('msTrackingProtectionEnabled' in window.external && window.external.msTrackingProtectionEnabled())) {
-      /* Do Not Track is enabled! */
-      matomoGeneratedCode(true);
-    } else {
-      /* Do Not Track is disabled! */
-      matomoGeneratedCode(false);
-    }
-  } else {
-     /* Do Not Track is not supported */
-      matomoGeneratedCode(false);
-  }
+  /* Always cookieless — no cookie banner needed */
+  matomoGeneratedCode(true);
 }

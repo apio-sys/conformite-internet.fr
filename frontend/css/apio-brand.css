@@ -1,0 +1,502 @@
+/* Apio Systems brand theme for conformite-internet.fr */
+
+:root {
+  --apio-dark:        #0d1f2d;
+  --apio-mid:         #1a3a52;
+  --apio-mid-hover:   #1e4260;
+  --apio-teal:        #007cba;
+  --apio-teal-light:  #0099e0;
+  --apio-accent:      #00b4d8;
+  --apio-border:      rgba(255, 255, 255, 0.10);
+  --apio-text:        #ffffff;
+  --apio-text-muted:  rgba(255, 255, 255, 0.65);
+  --apio-text-subtle: rgba(255, 255, 255, 0.35);
+}
+
+/* ── Base ── */
+body {
+  background-color: var(--apio-dark);
+  color: var(--apio-text);
+  /* Push footer to bottom on short pages */
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+/* JS adds .body-with-semifixed-header immediately — override its grey background */
+.body-with-semifixed-header {
+  background-color: var(--apio-dark);
+}
+main {
+  flex: 1;
+}
+header, footer {
+  flex-shrink: 0;
+}
+
+a {
+  color: var(--apio-accent);
+}
+a:hover, a:active {
+  color: var(--apio-teal-light);
+}
+/* Remove click-focus outline globally; keyboard nav still gets :focus-visible */
+a:focus,
+button:focus {
+  outline: none;
+}
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--apio-accent);
+  border-radius: 3px;
+}
+
+/* ── Header ── */
+header {
+  background-color: var(--apio-dark);
+  border-bottom: 1px solid var(--apio-border);
+  box-shadow: none;
+  /* Match apio-sys.fr exactly: padding on header, not on inner wrap */
+  padding: 20px 32px;
+}
+/* Reset legacy internal margins/width — the header padding does the job now */
+header .wrap {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: auto !important;
+  overflow: hidden;
+}
+
+/* Apio logo — squash all breakpoint-driven size overrides */
+#masthead {
+  background: none !important;
+  width: auto !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  display: inline-block;
+  float: left;
+  line-height: 0;
+}
+#masthead a {
+  display: inline-block;
+  line-height: 0;
+}
+#masthead img#apio-logo {
+  height: 42px;
+  width: auto;
+  filter: brightness(0) invert(1);
+  opacity: 0.9;
+  display: block;
+}
+
+/* Navigation */
+header nav li {
+  border-bottom-color: transparent;
+}
+header nav li.current {
+  border-color: var(--apio-teal);
+}
+header nav a {
+  color: var(--apio-text-muted);
+}
+header nav a:hover,
+header nav a:active,
+header nav a:focus {
+  color: var(--apio-text);
+  text-decoration: none;
+}
+header nav li.current a {
+  color: var(--apio-text);
+}
+
+/* Language switcher */
+header .language-switch-list li button {
+  color: var(--apio-text-muted);
+  background-color: transparent;
+}
+header .language-switch-list li button:hover,
+header .language-switch-list li button:active,
+header .language-switch-list li button:focus {
+  color: var(--apio-text);
+}
+header .language-switch-list li button.active-language {
+  color: var(--apio-accent);
+  text-decoration: none;
+}
+#language-switch-header-container.active {
+  border-color: var(--apio-border);
+}
+
+/* Mobile menu button */
+#menu-button {
+  background: var(--apio-mid);
+  color: var(--apio-text);
+  border-color: var(--apio-border);
+}
+
+/* ── Main background ── */
+main {
+  background-color: var(--apio-dark);
+  /* Consistent 20px gap below last blocks before footer hairline */
+  padding-bottom: 20px;
+}
+.mainwrap {
+  background-color: var(--apio-dark);
+  /* Gap between test blocks and the lower blocks (halloffame/stats) */
+  padding-bottom: 20px;
+}
+.home .mainwrap {
+  background: var(--apio-dark);
+}
+
+/* ── Fixed-header compensation ──
+   JS adds .body-with-semifixed-header immediately, making the header position:fixed.
+   style.css compensates with padding-top on main (66px base, 89px at ≥740px).
+   Our header is taller (~82px mobile, ~117px desktop with nav), so we override
+   with the correct values. Same selector specificity, later cascade → we win. */
+.body-with-semifixed-header main {
+  padding-top: 82px;
+}
+@media (min-width: 740px) {
+  .body-with-semifixed-header main {
+    padding-top: 120px;
+    overflow: hidden;
+  }
+}
+
+/* The visible gap between the fixed header and the hero/content is handled by
+   padding-top on mainwrap (same specificity as style.css's .home .mainwrap rule,
+   later cascade wins). */
+.home .mainwrap,
+.body-with-semifixed-header .mainwrap {
+  padding-top: 20px;
+}
+
+/* ── Hero text card (introwrap) ── */
+.introwrap {
+  background-color: var(--apio-dark);
+  /* Bottom padding = gap between hero card and test blocks below */
+  padding: 0 0 20px;
+}
+.introwrap .wrap {
+  background: var(--apio-mid);
+  border: 1px solid var(--apio-border);
+  border-radius: 16px;
+  padding: 36px;
+  text-align: center;
+  /* Mirror main .wrap: full width below 1050px, capped at 64.75em above */
+  width: auto !important;
+  max-width: 64.750em !important;
+  min-width: 0 !important;
+  margin: 0 auto !important;
+  box-sizing: border-box;
+}
+.introwrap p {
+  text-align: center;
+  margin: 0;
+}
+/* Large bold heading — same visual weight as h2 "Testez votre site web" */
+.introwrap p span {
+  background: none !important;
+  color: var(--apio-text);
+  font-size: 1.375em;
+  font-family: 'robotobold', arial, sans-serif;
+  font-weight: bold;
+  line-height: 1.4;
+  padding: 0;
+  display: block;
+}
+/* Kill the angled side pseudo-elements */
+.introwrap p span::before,
+.introwrap p span::after {
+  display: none !important;
+}
+
+/* ── Block spacing: zero out all per-block vertical margins, use container gap ── */
+main .wrap .block {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+/* Gap between blocks within each row */
+.mainwrap > div.wrap,
+main > div.wrap {
+  padding: 0;
+  gap: 16px;
+}
+
+/* Reset top and bottom padding on maincontent wrap — main padding-bottom handles the gap */
+main > div.wrap {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+/* ── Content blocks (cards) ── */
+.block {
+  background-color: var(--apio-mid);
+  box-shadow: none;
+  border: 1px solid var(--apio-border);
+  border-radius: 16px;
+  color: var(--apio-text);
+}
+.block h2, .block h3, .block h4 {
+  color: var(--apio-text);
+}
+
+/* Override all link colour rules from style.css that are unreadable on dark bg.
+   .block a { color: #037584 } — dark teal fine on white, invisible on dark (0,1,1)
+   .block h3 a, .news li a etc. — #000 rules, same specificity fix below. */
+/* All dark-background blocks: use bright accent for readability */
+.block a {
+  color: var(--apio-accent);
+}
+.block a:hover {
+  color: var(--apio-teal-light);
+}
+/* Hall-of-fame is white — use a deeper teal that works on white */
+.block.hall-of-fame a {
+  color: var(--apio-teal);
+}
+.block.hall-of-fame a:hover {
+  color: var(--apio-teal-light);
+}
+.block h3 a,
+.block h4 a,
+.news li a,
+aside a,
+.test-direct a,
+.further-testing a,
+.overview a,
+.panel-title a {
+  color: var(--apio-accent);
+}
+.block h3 a:hover,
+.block h4 a:hover,
+.news li a:hover,
+aside a:hover,
+.test-direct a:hover,
+.further-testing a:hover,
+.overview a:hover,
+.panel-title a:hover,
+.panel-title a:focus {
+  color: var(--apio-teal-light);
+}
+/* Remove the white hover background on right-column news links */
+.news li a:hover,
+.news li a:active,
+.news li a:focus {
+  background-color: transparent;
+}
+
+/* Test block inner layout */
+.home .block .wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.home .block .wrapper .title-and-explanation {
+  display: block;
+  width: 100%;
+}
+.home .block .wrapper form {
+  display: block;
+  padding-top: 1.25em;
+  vertical-align: unset;
+}
+
+/* ── Forms: test inputs ── */
+.block .text-input {
+  color: var(--apio-text-muted);
+  font-size: 0.9em;
+}
+.block input[type="text"] {
+  background-color: rgba(255, 255, 255, 0.07);
+  color: var(--apio-text);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+}
+.block input[type="text"]:focus {
+  border-color: var(--apio-teal);
+  outline: none;
+}
+.block input::placeholder {
+  color: var(--apio-text-subtle);
+}
+
+/* ── Email field (block 2) — match block 1 dark styling ── */
+.block .emailfield {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  margin-top: .5em;
+}
+/* @ badge — teal pill matching Apio brand */
+.block .emailfield::before {
+  background: var(--apio-teal);
+  color: #ffffff;
+  font-weight: 600;
+  padding: 0 8px;
+  width: auto;
+  border-radius: 4px 0 0 4px;
+}
+.block .emailfield input {
+  background: transparent;
+  color: var(--apio-text);
+  border-width: 0;
+}
+.block .emailfield input::placeholder {
+  color: var(--apio-text-subtle);
+}
+
+/* ── Buttons — match apio-sys.fr "Nous contacter" style ── */
+.block button,
+.contains-button button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: var(--apio-teal);
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  /* System font stack matching apio-sys.fr — not the Roboto web font */
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 11px 22px;
+  cursor: pointer;
+  transition: background 0.18s;
+  /* Override display:block and margin:auto from style.css */
+  margin: 0;
+}
+.block button:hover,
+.contains-button button:hover {
+  background-color: var(--apio-teal-light);
+}
+/* Right arrow — unicode for maximum reliability */
+.contains-button button::after {
+  content: '\2192';
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1;
+}
+
+/* ── Read-more links ── */
+.read-more a {
+  color: var(--apio-accent);
+  background-image: url('/static/icon-arrow-right-white.svg'), none;
+}
+.read-more a:hover {
+  color: var(--apio-teal-light);
+}
+
+/* ── Hall of fame block — white background as visual differentiator ── */
+/* style.css .block.hall-of-fame { background: white } wins over our .block rule
+   (higher specificity). We just need to restore dark text on the white card. */
+.block.hall-of-fame {
+  color: var(--apio-dark);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+.block.hall-of-fame h2,
+.block.hall-of-fame h3,
+.block.hall-of-fame p {
+  color: var(--apio-dark);
+}
+.block.hall-of-fame a {
+  color: var(--apio-teal);
+}
+.block.hall-of-fame a:hover {
+  color: var(--apio-teal-light);
+}
+/* Use dark arrow on white background */
+.block.hall-of-fame .read-more a {
+  color: var(--apio-teal);
+  background-image: url('/static/icon-arrow-right.svg'), none;
+}
+.block.hall-of-fame .read-more a:hover {
+  color: var(--apio-teal-light);
+}
+
+/* ── Dark stat block ── */
+.block.dark {
+  background-color: var(--apio-mid);
+  border-color: var(--apio-border);
+  color: var(--apio-text);
+}
+.block.dark a {
+  color: var(--apio-accent);
+}
+.block.dark a:hover {
+  color: var(--apio-teal-light);
+}
+.dark .read-more a {
+  color: var(--apio-accent);
+  background-image: url('/static/icon-arrow-right-white.svg'), none;
+}
+
+/* ── Footer — single inline paragraph ── */
+footer {
+  background-color: var(--apio-dark);
+  border-top: 1px solid var(--apio-border);
+  padding: 16px 32px;
+  text-align: center;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 12px;
+  line-height: 1;
+  color: var(--apio-text-subtle);
+}
+.footer-line {
+  margin: 0;
+  padding: 0;
+  color: var(--apio-text-subtle);
+}
+.footer-line a {
+  color: var(--apio-text-subtle);
+  text-decoration: none;
+}
+.footer-line a:hover {
+  color: var(--apio-text-muted);
+}
+
+/* ── Form spacing ── */
+.invalid-domain {
+  margin-bottom: 1.25em;
+}
+.contains-button {
+  margin-top: 1.25em;
+}
+
+/* ── Hall of fame / page menu tabs (ul.menu) ── */
+ul.menu a,
+ul.menu a:visited {
+  color: var(--apio-accent);
+}
+ul.menu a:hover,
+ul.menu a:focus,
+ul.menu a:active {
+  color: var(--apio-teal-light);
+  text-decoration: none;
+}
+/* Tab underline: transparent by default, teal on active — matches header nav style */
+ul.menu li a {
+  border-bottom-color: transparent;
+}
+ul.menu li a[aria-current="page"] {
+  color: var(--apio-text);
+  border-color: var(--apio-teal);
+}
+/* Separator between tabs */
+ul.menu li + li::before {
+  background: var(--apio-border);
+}
+
+/* ── General text ── */
+h1, h2, h3, h4 {
+  color: var(--apio-text);
+}
+hr {
+  background: var(--apio-border);
+}
+code {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--apio-accent);
+}

@@ -1,6 +1,7 @@
 ﻿<!DOCTYPE html>
 {% load static %}
 {% load i18n %}
+{% load tz %}
 {% load translate %}
 <html lang="{{request.current_language_code}}" >
 
@@ -16,6 +17,7 @@
   <link rel="apple-touch-icon-precomposed" href="{% static 'favicon.png' %}" />
   <meta name="msapplication-TileImage" content="{% static 'favicon.png' %}" />
   <link rel="stylesheet" type="text/css" href="{% static 'css/style-min.css' %}" />
+  <link rel="stylesheet" type="text/css" href="{% static 'css/apio-brand-min.css' %}" />
   <link rel="stylesheet" type="text/css" href="{% static 'css/print-min.css' %}" media="print" />
 
   <script src="{% static "js/jquery-3.5.1.min.js" %}"></script>
@@ -37,12 +39,11 @@
   <div class="skiplink"><a href="#footer">{% include "string.html" with name='page gotofooter' %}</a></div>
   <header>
     <div class="wrap">
-      {% if "INTERNETNL_BRANDING"|get_settings_value %}
       <div id="masthead">
-        <p id="site-title"><a href="/"><span class="hidden">{% include "string.html" with name='page sitetitle' %}</span></a></p>
-        <p id="site-description"><span class="hidden">{% include "string.html" with name='page sitedescription' %}</span></p>
+        <a href="https://apio.systems/" title="Apio systems" target="_blank" rel="noopener noreferrer">
+          <img id="apio-logo" src="{% static 'logo-apio.svg' %}" alt="Apio systems">
+        </a>
       </div>
-      {% endif %}
 
       <!-- language switch -->
       <div id="language-switch-header-container">
@@ -71,14 +72,8 @@
       <nav id="sitenav">
         <ul>
           <li class="{% if pagemenu == 'home' %}current{% endif %}"><a href="/">{% include "string.html" with name="base home" %}</a></li>
-          <li class="{% if pagemenu == 'news' %}current{% endif %}"><a href="/news/">{% include "string.html" with name="base news" %}</a></li>
           <li class="{% if pagemenu == 'faqs' %}current{% endif %}"><a href="/faqs/">{% include "string.html" with name="base faqs" %}</a></li>
           <li class="{% if pagemenu == 'halloffame' %}current{% endif %}"><a href="/halloffame/">{% include "string.html" with name="base halloffame" %}</a></li>
-          {% if "INTERNETNL_BRANDING"|get_settings_value %}
-          <li class="{% if pagemenu == 'about' %}current{% endif %}"><a href="/about/">{% include "string.html" with name="base about" %}</a></li>
-          {% else %}
-          <li class="{% if pagemenu == 'about' %}current{% endif %}"><a href="/about/">{% include "string.html" with name="base about custom" %}</a></li>
-          {% endif %}
         </ul>
       </nav>
     </div>
@@ -96,28 +91,11 @@
   </main>
 
   <footer id="footer">
-    <img id="flag" src="{% static "clear.gif" %}" alt="">
-    <div class="wrap">
-      {% if "INTERNETNL_BRANDING"|get_settings_value %}
-      {% include "string.html" with name="base info" %}
-      {% else %}
-      {% include "string.html" with name="base info custom" %}
-      {% endif %}
-      <div class="version">v{{ "VERSION"|get_settings_value }}</div>
-      <hr>
-      <ul>
-        <li><a class="footlink" href="/disclosure/">{% include "string.html" with name="base disclosure" %}</a></li>
-        <li><a class="footlink" href="/privacy/">{% include "string.html" with name="base privacy" %}</a></li>
-        <li><a class="footlink" href="/copyright/">{% include "string.html" with name="base copyright" %}</a></li>
-        {% if "HAS_ACCESSIBILITY_PAGE"|get_settings_value %}
-        <li><a class="footlink" href="/accessibility/">{% include "string.html" with name="base accessibility" %}</a></li>
-        {% endif %}
-        {% if "INTERNETNL_BRANDING"|get_settings_value %}
-        <li class="follow-us"><a class="footlink linkedinfollow" href="https://www.linkedin.com/company/internet-nl/">LinkedIn</a></li>
-        <li class="follow-us"><a class="footlink mastodonfollow" href="https://mastodon.nl/@internet_nl" rel="me">Mastodon</a></li>
-        {% endif %}
-      </ul>
-    </div>
+    <p class="footer-line">
+      &copy; 2015 &ndash; {% now "Y" %} <a href="https://apio.systems/" target="_blank" rel="noopener noreferrer">Apio systems</a>. Tous droits réservés.
+      <a href="/privacy/">{% include "string.html" with name="base privacy" %}</a>.
+      <a href="https://internet.nl/copyright/" target="_blank" rel="noopener noreferrer">Projet Internet.nl</a>
+    </p>
   </footer>
   <script type="text/javascript" src="{% static "js/menu-min.js" %}" defer></script>
   <script type="text/javascript" src="{% static "js/accordion-min.js" %}" defer></script>

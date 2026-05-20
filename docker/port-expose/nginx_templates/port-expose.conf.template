@@ -5,7 +5,8 @@ server {
     server_name  _;
 
     location / {
-        proxy_set_header Host ${INTERNETNL_DOMAINNAME};
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Forwarded-Proto http;
         proxy_ssl_name ${INTERNETNL_DOMAINNAME};
         proxy_ssl_server_name on;
         proxy_ssl_verify off;
@@ -18,7 +19,7 @@ server {
     }
 
     location /__reload__/events/ {
-        proxy_set_header Host ${INTERNETNL_DOMAINNAME};
+        proxy_set_header Host $http_host;
         proxy_ssl_name ${INTERNETNL_DOMAINNAME};
         proxy_ssl_server_name on;
         proxy_ssl_verify off;
