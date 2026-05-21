@@ -146,23 +146,27 @@ main {
 .home .mainwrap {
   background: var(--apio-dark);
 }
-/* Non-home pages have no introcontent — collapse the empty mainwrap */
+/* Non-home pages have no introcontent — collapse the empty mainwrap,
+   but give the content wrap the same 20px gap the home mainwrap provides */
 body:not(.home) .mainwrap {
   padding-top: 0;
   padding-bottom: 0;
+}
+body:not(.home) main > div.wrap {
+  padding-top: 20px !important;
 }
 
 /* ── Fixed-header compensation ──
    JS adds .body-with-semifixed-header immediately, making the header position:fixed.
    style.css compensates with padding-top on main (66px base, 89px at ≥740px).
-   Our header is taller (~82px mobile, ~94px desktop with nav+lang-switch rows),
+   Our header is taller (~82px mobile, ~112px desktop with nav+lang-switch rows),
    so we override. Same selector specificity, later cascade → we win. */
 .body-with-semifixed-header main {
   padding-top: 82px;
 }
 @media (min-width: 740px) {
   .body-with-semifixed-header main {
-    padding-top: 92px;
+    padding-top: 112px;
     overflow: hidden;
   }
 }
@@ -290,20 +294,43 @@ aside a:hover,
   background-color: transparent;
 }
 
-/* Test block inner layout */
+/* Test block inner layout — column flex so inputs AND buttons align.
+   - wrapper:         column flex, full height
+   - title-and-explanation: flex:1 → grows to fill space, form anchored below
+   - form:            column flex so label+button are items
+   - label.text-input: flex:1 with space-between → text at top, input at bottom
+   This pins both the input field and the button at consistent heights
+   regardless of how much text is in each block's description. */
 .home .block .wrapper {
   display: flex;
   flex-direction: column;
   height: 100%;
 }
 .home .block .wrapper .title-and-explanation {
-  display: block;
-  width: 100%;
+  flex: 1;
 }
 .home .block .wrapper form {
-  display: block;
+  display: flex;
+  flex-direction: column;
   padding-top: 1.25em;
   vertical-align: unset;
+}
+.home .block .wrapper form label.text-input {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  /* no justify-content: use margin-top:auto on inputs to pin them to the bottom */
+}
+/* Pin both inputs to the bottom of the label — works regardless of text height differences */
+.home .block .wrapper form label.text-input > input[type="text"],
+.home .block .wrapper form label.text-input > .emailfield {
+  margin-top: auto !important;
+  margin-bottom: 0 !important;
+  height: 1.875em !important;
+  box-sizing: border-box;
+}
+.home .block .wrapper form .contains-button {
+  margin-top: 1.25em;
 }
 
 /* ── Forms: test inputs ── */
@@ -325,27 +352,46 @@ aside a:hover,
   color: var(--apio-text-subtle);
 }
 
-/* ── Email field (block 2) — match block 1 dark styling ── */
+/* ── Email field (block 2) — flexbox layout for proper @ centering ── */
 .block .emailfield {
-  background: rgba(255, 255, 255, 0.07);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  display: flex !important;  /* override style.css display:block; float layout */
+  align-items: stretch;
+  background: rgba(255, 255, 255, 0.07) !important;  /* beat style.css background:white */
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
   border-radius: 6px;
-  margin-top: .5em;
-  margin-bottom: 0;  /* style.css adds 1em here, remove it to align button with web test */
+  margin-top: 0;
+  margin-bottom: 0;
+  overflow: hidden;
 }
-/* @ badge — teal pill matching Apio brand */
+/* Teal border on focus — consistent with web input, keeps pill fully visible */
+.block .emailfield:focus-within {
+  border-color: var(--apio-teal) !important;
+  outline: none;
+}
+/* @ badge — teal pill, flex item, @ centered via flex align-items */
 .block .emailfield::before {
+  float: none !important;    /* un-float from style.css */
+  height: auto !important;   /* let flex handle height */
+  width: auto !important;    /* let content determine width */
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
   background: var(--apio-teal);
   color: #ffffff;
   font-weight: 600;
-  padding: 0 8px;
-  width: auto;
-  border-radius: 4px 0 0 4px;
+  padding: 0 10px;
+  line-height: normal;
 }
 .block .emailfield input {
+  float: none !important;    /* un-float from style.css */
+  width: auto !important;    /* override width: calc(92% - 6px) from style.css */
+  height: auto !important;
+  flex: 1;
   background: transparent;
   color: var(--apio-text);
   border-width: 0;
+  margin: 0 !important;
+  padding-left: 0.5em;
 }
 .block .emailfield input::placeholder {
   color: var(--apio-text-subtle);
@@ -491,6 +537,17 @@ ul.menu li + li::before {
   background: var(--apio-border);
 }
 
+/* ── Results page action icons (override alt.css) ── */
+#testresults-overview .icon-testinfo {
+  background-image: url('/static/icon-testinfo-apio.svg') !important;
+}
+#testresults-overview .permalink {
+  background-image: url('/static/icon-permalink-apio.svg') !important;
+}
+#testresults-overview .reruntest {
+  background-image: url('/static/icon-reruntest-apio.svg') !important;
+}
+
 /* ── Test block icons (override alt.css which loads dynamically after us) ── */
 /* White globe for website test */
 .websitetest h1,
@@ -628,10 +685,6 @@ main .wrap .block.fullwidth .wrap {
   box-shadow: none;
   border: 1px solid var(--apio-border);
   border-radius: 16px;
-}
-/* Give the fullwidth block the same top gap as the mainwrap on other pages */
-main .wrap .block.fullwidth {
-  margin-top: 20px;
 }
 /* The outer block has background:none at ≥740px — keep it that way */
 @media (min-width: 740px) {
