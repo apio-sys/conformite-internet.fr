@@ -29,7 +29,7 @@
   {% endblock %}
 </head>
 <body class="{{pageclass}}">
-  <img id="flag" src="{% static "clear.gif" %}" alt="" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;">
+  <img id="flag" src="{% static "clear.gif" %}" alt="">
   <div class="hidethis" aria-hidden="true">
     <span id="matomo-url">{{"MATOMO_URL"|get_settings_value}}</span>
     <span id="matomo-siteid">{{"MATOMO_SITEID"|get_settings_value}}</span>

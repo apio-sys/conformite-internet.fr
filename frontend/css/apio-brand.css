@@ -18,6 +18,15 @@ body {
   background-color: var(--apio-dark);
   color: var(--apio-text);
 }
+/* imagecheck.js reads #flag.offsetWidth to decide whether to load alt-min.css.
+   Keep it in layout (1px wide) but invisible. Inline style would violate CSP. */
+#flag {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
 /* JS adds .body-with-semifixed-header immediately — override its grey background */
 .body-with-semifixed-header {
   background-color: var(--apio-dark);
@@ -322,6 +331,7 @@ aside a:hover,
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 6px;
   margin-top: .5em;
+  margin-bottom: 0;  /* style.css adds 1em here, remove it to align button with web test */
 }
 /* @ badge — teal pill matching Apio brand */
 .block .emailfield::before {
@@ -495,11 +505,6 @@ ul.menu li + li::before {
   background-image: url('/static/icon-emailtest-apio.svg') !important;
 }
 
-/* ── Probe spinner — recolor the GIF to match brand ── */
-/* filter: make it white/light so it reads on dark background */
-.probing img {
-  filter: brightness(0) invert(1) opacity(0.75);
-}
 
 /* ── General text ── */
 h1, h2, h3, h4 {
@@ -623,6 +628,10 @@ main .wrap .block.fullwidth .wrap {
   box-shadow: none;
   border: 1px solid var(--apio-border);
   border-radius: 16px;
+}
+/* Give the fullwidth block the same top gap as the mainwrap on other pages */
+main .wrap .block.fullwidth {
+  margin-top: 20px;
 }
 /* The outer block has background:none at ≥740px — keep it that way */
 @media (min-width: 740px) {
