@@ -1,3 +1,12 @@
+# If the incoming host is a subdomain of our domain, pass it through (strips port
+# via $host) so language subdomains work in local dev (fr.internet.test:8080).
+# For unrelated hosts like host-gateway used by CI test runners, fall back to
+# the configured domain name so the webserver's server_name regex matches.
+map $http_host $port_expose_host {
+    ~^(.*\.)?${INTERNETNL_DOMAINNAME}(:\d+)?$ $host;
+    default ${INTERNETNL_DOMAINNAME};
+}
+
 # strip TLS and proxy connection to the application webserver
 server {
     listen       8080;
@@ -5,7 +14,7 @@ server {
     server_name  _;
 
     location / {
-        proxy_set_header Host $http_host;
+        proxy_set_header Host $port_expose_host;
         proxy_set_header X-Forwarded-Proto http;
         proxy_ssl_name ${INTERNETNL_DOMAINNAME};
         proxy_ssl_server_name on;
@@ -19,7 +28,7 @@ server {
     }
 
     location /__reload__/events/ {
-        proxy_set_header Host $http_host;
+        proxy_set_header Host $port_expose_host;
         proxy_ssl_name ${INTERNETNL_DOMAINNAME};
         proxy_ssl_server_name on;
         proxy_ssl_verify off;

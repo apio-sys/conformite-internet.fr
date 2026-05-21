@@ -481,6 +481,26 @@ ul.menu li + li::before {
   background: var(--apio-border);
 }
 
+/* ── Test block icons (override alt.css which loads dynamically after us) ── */
+/* White globe for website test */
+.websitetest h1,
+.block .websitetest h2,
+.block.websitetest h2 {
+  background-image: url('/static/icon-website-test-apio.svg') !important;
+}
+/* White envelope for email test */
+.emailtest h1,
+.block .emailtest h2,
+.block.emailtest h2 {
+  background-image: url('/static/icon-emailtest-apio.svg') !important;
+}
+
+/* ── Probe spinner — recolor the GIF to match brand ── */
+/* filter: make it white/light so it reads on dark background */
+.probing img {
+  filter: brightness(0) invert(1) opacity(0.75);
+}
+
 /* ── General text ── */
 h1, h2, h3, h4 {
   color: var(--apio-text);
