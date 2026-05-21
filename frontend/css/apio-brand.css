@@ -17,20 +17,10 @@
 body {
   background-color: var(--apio-dark);
   color: var(--apio-text);
-  /* Push footer to bottom on short pages */
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
 }
 /* JS adds .body-with-semifixed-header immediately — override its grey background */
 .body-with-semifixed-header {
   background-color: var(--apio-dark);
-}
-main {
-  flex: 1;
-}
-header, footer {
-  flex-shrink: 0;
 }
 
 a {
@@ -147,18 +137,23 @@ main {
 .home .mainwrap {
   background: var(--apio-dark);
 }
+/* Non-home pages have no introcontent — collapse the empty mainwrap */
+body:not(.home) .mainwrap {
+  padding-top: 0;
+  padding-bottom: 0;
+}
 
 /* ── Fixed-header compensation ──
    JS adds .body-with-semifixed-header immediately, making the header position:fixed.
    style.css compensates with padding-top on main (66px base, 89px at ≥740px).
-   Our header is taller (~82px mobile, ~117px desktop with nav), so we override
-   with the correct values. Same selector specificity, later cascade → we win. */
+   Our header is taller (~82px mobile, ~94px desktop with nav+lang-switch rows),
+   so we override. Same selector specificity, later cascade → we win. */
 .body-with-semifixed-header main {
   padding-top: 82px;
 }
 @media (min-width: 740px) {
   .body-with-semifixed-header main {
-    padding-top: 120px;
+    padding-top: 92px;
     overflow: hidden;
   }
 }
@@ -211,10 +206,9 @@ main {
   display: none !important;
 }
 
-/* ── Block spacing: zero out all per-block vertical margins, use container gap ── */
+/* ── Block spacing: zero out all per-block margins, use container gap/padding ── */
 main .wrap .block {
-  margin-top: 0 !important;
-  margin-bottom: 0 !important;
+  margin: 0 !important;
 }
 
 /* Gap between blocks within each row */
