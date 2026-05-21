@@ -7,8 +7,8 @@ from playwright.sync_api import expect
 import socket
 import os
 
-FOOTER_TEXT_EN = "Internet.nl is an initiative of the Internet community and the Dutch"
-FOOTER_TEXT_NL = "Internet.nl is een initiatief van de internetgemeenschap en de Nederlandse"
+FOOTER_TEXT_EN = "Apio systems"
+FOOTER_TEXT_NL = "Apio systems"
 
 LANGUAGE_CHANGE_TEXT_EN = "Test your website"
 LANGUAGE_CHANGE_TEXT_NL = "Test je website"

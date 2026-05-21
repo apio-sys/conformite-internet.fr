@@ -14,6 +14,7 @@ TEST_CONNECTION_EXPECTED_SCORE = 100.0
 TEST_CONNECTION_EXPECTED_SCORE = 50.0
 
 
+@pytest.mark.skip(reason="connection test removed from UI in this fork")
 def test_your_connection_score(page, app_url, app_domain):
     """Runs the 'Test your connection' and expects a decent result."""
 
