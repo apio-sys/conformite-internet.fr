@@ -1,5 +1,6 @@
 import binascii
-import concurrent.futures
+import functools
+import math
 from binascii import hexlify
 from enum import Enum
 from pathlib import Path
@@ -44,14 +45,18 @@ from sslyze.errors import (
     TlsHandshakeTimedOut,
     ConnectionToServerFailed,
     ServerHostnameCouldNotBeResolved,
+    ServerTlsConfigurationNotSupported,
 )
 from sslyze.plugins.certificate_info._certificate_utils import (
     parse_subject_alternative_name_extension,
     get_common_names,
 )
-from sslyze.plugins.openssl_cipher_suites._test_cipher_suite import _set_cipher_suite_string
+from sslyze.plugins.openssl_cipher_suites._test_cipher_suite import (
+    CipherSuiteAcceptedByServer,
+    _set_cipher_suite_string,
+)
+from sslyze.plugins.openssl_cipher_suites._tls12_workaround import WorkaroundForTls12ForCipherSuites
 from sslyze.plugins.openssl_cipher_suites.cipher_suites import CipherSuitesRepository
-from sslyze.scanner.models import CipherSuitesScanAttempt
 from sslyze.server_connectivity import ServerConnectivityInfo
 
 from checks import scoring
@@ -85,6 +90,7 @@ from checks.tasks.tls.tls_constants import (
     CERT_RSA_MIN_PHASE_OUT_KEY_SIZE,
     SIGNATURE_ALGORITHMS_BAD_HASH,
     SIGNATURE_ALGORITHMS_PHASE_OUT_HASH,
+    TLS_1_3_PROBE_CIPHERS,
 )
 from internetnl import log
 
@@ -99,30 +105,9 @@ SSLYZE_SCAN_COMMANDS = {
 # TLS_1_3_EARLY_DATA only works for HTTPS - it sends an HTTP GET request
 # which breaks SMTP sessions. See #2055.
 SSLYZE_WEB_SCAN_COMMANDS = {ScanCommand.TLS_1_3_EARLY_DATA}
-SSLYZE_SCAN_COMMANDS_FOR_TLS = {
-    TlsVersionEnum.SSL_2_0: ScanCommand.SSL_2_0_CIPHER_SUITES,
-    TlsVersionEnum.SSL_3_0: ScanCommand.SSL_3_0_CIPHER_SUITES,
-    TlsVersionEnum.TLS_1_0: ScanCommand.TLS_1_0_CIPHER_SUITES,
-    TlsVersionEnum.TLS_1_1: ScanCommand.TLS_1_1_CIPHER_SUITES,
-    TlsVersionEnum.TLS_1_2: ScanCommand.TLS_1_2_CIPHER_SUITES,
-    TlsVersionEnum.TLS_1_3: ScanCommand.TLS_1_3_CIPHER_SUITES,
-}
-
-
-def cipher_scan_commands_for_versions(supported_tls_versions: list[TlsVersionEnum]) -> set[ScanCommand]:
-    """
-    Determine which cipher suite scan commands to run.
-    All TLS 1.3 ciphers are good/sufficient, so there is no need to scan them.
-    For any non-1.3 version, only the highest is scanned.
-    Potentially differing ciphers on lower versions are not independently interesting,
-    because the TLS version test already fails on those.
-    See also #2031
-    """
-    non_tls13 = [v for v in supported_tls_versions if v != TlsVersionEnum.TLS_1_3]
-    if not non_tls13:
-        return set()
-    highest = max(non_tls13, key=lambda v: v.value)
-    return {SSLYZE_SCAN_COMMANDS_FOR_TLS[highest]}
+# Some servers ignore ciphers past the 64th in a ClientHello, others reject overly
+# large ClientHellos. nmap's ssl-enum-ciphers uses 64 too.
+CIPHER_PROBE_CHUNK_SIZE = 64
 
 
 # Some of the code in this file calls
@@ -528,68 +513,20 @@ def check_pubkey(certificates: list[Certificate], mode: ChecksMode):
     return pubkey_score, bad_pubkey, phase_out_pubkey
 
 
-def check_mail_tls_multiple(server_tuples) -> dict[str, dict[str, Any]]:
+def connection_limit_for_mail_hostname(hostname: str) -> int:
     """
-    Perform sslyze probing on all mail servers, in parallel.
+    Determine the per-server sslyze connection limit for a mail server.
+    Some hosts (anti-spam services that throttle scanners) need a higher limit
+    to avoid the scan stalling; see MAIL_ALTERNATE_CONNLIMIT_HOST_SUBSTRS.
     """
-    scans = []
-    results = {}
-    ems_evaluations = {}
-    tls_versions_per_server = {}
-    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_server = {}
-
-        for server in server_tuples:
-            future = executor.submit(_generate_mail_server_scan_request, server)
-            future_to_server[future] = server
-
-        for future in concurrent.futures.as_completed(future_to_server):
-            server = future_to_server[future]
-            try:
-                scan_request, ems_evaluation, supported_tls_versions = future.result()
-            except Exception as exc:
-                log.error(f"Unexpected error generating scan request for mail server {server}: {exc}", exc_info=True)
-                results[server] = dict(server_reachable=False, tls_enabled=False)
-                continue
-
-            if scan_request:
-                scans.append(scan_request)
-                ems_evaluations[scan_request.server_location.hostname] = ems_evaluation
-                tls_versions_per_server[scan_request.server_location.hostname] = supported_tls_versions
-            else:
-                results[server] = dict(server_reachable=False, tls_enabled=False)
-
-    if not scans:
-        return results
-    connection_limit = connection_limit_for_scans(scans)
-    for all_suites, result, error in run_sslyze(scans, connection_limit=connection_limit):
-        hostname = result.server_location.hostname
-        if error:
-            log.info(f"sslyze scan for mail failed: {error}")
-            results[hostname] = dict(server_reachable=False, tls_enabled=False)
-            continue
-        log.debug(f"sslyze mail scan complete for {hostname}, other scans may be pending")
-        results[hostname] = check_mail_tls(
-            result, all_suites, ems_evaluations[hostname], tls_versions_per_server[hostname]
-        )
-        log.debug(f"check_mail_tls complete for {hostname}")
-    return results
-
-
-def connection_limit_for_scans(scans: list[ServerScanRequest]):
-    """
-    Determine the appropriate connection limit for a mail server.
-    Sometimes we set this higher, due to anti-spam slowness.
-    """
-    hostnames = [scan.server_location.hostname for scan in scans]
     for hostname_substr, limit in MAIL_ALTERNATE_CONNLIMIT_HOST_SUBSTRS.items():
-        if any([hostname_substr in hostname for hostname in hostnames]):
-            log.info(f"conn limit raised to: {limit} for {hostname_substr} found in {hostnames}")
+        if hostname_substr in hostname:
+            log.info(f"conn limit raised to {limit} for {hostname_substr} found in {hostname}")
             return limit
     return 1
 
 
-def _generate_mail_server_scan_request(
+def generate_mail_server_scan_request(
     mx_hostname: str,
 ) -> tuple[ServerScanRequest | None, TLSExtendedMasterSecretEvaluation, list[TlsVersionEnum]]:
     """
@@ -618,7 +555,7 @@ def _generate_mail_server_scan_request(
     if not supported_tls_versions:
         log.info(f"no TLS version support found for MX host {mx_hostname}, marking server unreachable")
         return None, extended_master_secret_evaluation, []
-    scan_commands = SSLYZE_SCAN_COMMANDS | cipher_scan_commands_for_versions(supported_tls_versions)
+    scan_commands = set(SSLYZE_SCAN_COMMANDS)
 
     return (
         ServerScanRequest(
@@ -638,7 +575,6 @@ def _generate_mail_server_scan_request(
 
 def check_mail_tls(
     result: ServerScanResult,
-    all_suites: list[CipherSuitesScanAttempt],
     extended_master_secret_evaluation: TLSExtendedMasterSecretEvaluation,
     supported_tls_versions: list[TlsVersionEnum],
 ):
@@ -646,17 +582,18 @@ def check_mail_tls(
     Perform evaluation and additional probes for a single mail server.
     This happens after sslyze has already been run on it.
     """
-    ciphers_accepted = [cipher for suites in all_suites for cipher in suites.result.accepted_cipher_suites]
-
-    protocol_evaluation = TLSProtocolEvaluation.from_protocols_accepted(supported_tls_versions)
-    fs_evaluation = TLSForwardSecrecyParameterEvaluation.from_ciphers_accepted(ciphers_accepted)
-    cipher_evaluation = TLSCipherEvaluation.from_ciphers_accepted(ciphers_accepted)
-
     server_conn_info = ServerConnectivityInfo(
         server_location=result.server_location,
         network_configuration=result.network_configuration,
         tls_probing_result=result.connectivity_result,
     )
+
+    ciphers_accepted = find_accepted_ciphers(server_conn_info, supported_tls_versions)
+
+    protocol_evaluation = TLSProtocolEvaluation.from_protocols_accepted(supported_tls_versions)
+    fs_evaluation = TLSForwardSecrecyParameterEvaluation.from_ciphers_accepted(ciphers_accepted)
+    cipher_evaluation = TLSCipherEvaluation.from_ciphers_accepted(ciphers_accepted)
+
     cipher_order_evaluation = test_cipher_order(
         server_conn_info,
         supported_tls_versions,
@@ -737,10 +674,25 @@ def has_daneTA(tlsa_records):
     return False
 
 
+def scan_one_mail_server(mx_hostname: str) -> dict:
+    """Generate the sslyze scan request, run sslyze, and evaluate the result for one MX server."""
+    scan_request, ems_evaluation, supported_tls_versions = generate_mail_server_scan_request(mx_hostname)
+    if not scan_request:
+        return dict(server_reachable=False, tls_enabled=False)
+    connection_limit = connection_limit_for_mail_hostname(mx_hostname)
+    result, error = next(run_sslyze([scan_request], connection_limit=connection_limit))
+    if error:
+        log.info(f"sslyze scan for mail server {mx_hostname} failed: {error}")
+        return dict(server_reachable=False, tls_enabled=False)
+    log.debug(f"sslyze mail scan complete for {mx_hostname}, evaluating")
+    return check_mail_tls(result, ems_evaluation, supported_tls_versions)
+
+
 def check_web_tls(url, af_ip_pair=None, *args, **kwargs):
     """
     Check the webserver's TLS configuration.
     """
+    log.debug(f"check_web_tls start for {url}/{af_ip_pair[1] if af_ip_pair else None}")
     server_location = ServerNetworkLocation(hostname=url, ip_address=af_ip_pair[1])
     network_configuration = ServerNetworkConfiguration(
         tls_server_name_indication=url.rstrip("."),
@@ -755,13 +707,8 @@ def check_web_tls(url, af_ip_pair=None, *args, **kwargs):
             tls_probing_result=FAKE_SERVER_TLS_PROBING_RESULT,
         )
     )
-    scan_commands = (
-        SSLYZE_SCAN_COMMANDS
-        | SSLYZE_WEB_SCAN_COMMANDS
-        | cipher_scan_commands_for_versions(supported_tls_versions)
-        | {ScanCommand.CERTIFICATE_INFO}
-    )
-    log.info(f"==== precheck on {server_location} supports {supported_tls_versions} {scan_commands=}")
+    scan_commands = SSLYZE_SCAN_COMMANDS | SSLYZE_WEB_SCAN_COMMANDS | {ScanCommand.CERTIFICATE_INFO}
+    log.info(f"precheck on {server_location} supports {supported_tls_versions} {scan_commands=}")
     scan = ServerScanRequest(
         server_location=server_location,
         network_configuration=network_configuration,
@@ -773,23 +720,24 @@ def check_web_tls(url, af_ip_pair=None, *args, **kwargs):
             ),
         ),
     )
-    all_suites, result, error = next(run_sslyze([scan], connection_limit=25))
-    if error and not all_suites:
+    result, error = next(run_sslyze([scan], connection_limit=25))
+    if error and result.scan_status == ServerScanStatusEnum.ERROR_NO_CONNECTIVITY:
         log.info(f"sslyze scan for web on {url} failed: {error}")
         return dict(server_reachable=False, tls_enabled=False)
     if error:
         log.warning(f"sslyze scan for web on {url} partially failed (continuing with available results): {error}")
-
-    ciphers_accepted = [cipher for suites in all_suites for cipher in suites.result.accepted_cipher_suites]
-    protocol_evaluation = TLSProtocolEvaluation.from_protocols_accepted(supported_tls_versions)
-    fs_evaluation = TLSForwardSecrecyParameterEvaluation.from_ciphers_accepted(ciphers_accepted)
-    cipher_evaluation = TLSCipherEvaluation.from_ciphers_accepted(ciphers_accepted)
 
     server_conn_info = ServerConnectivityInfo(
         server_location=result.server_location,
         network_configuration=result.network_configuration,
         tls_probing_result=result.connectivity_result,
     )
+
+    ciphers_accepted = find_accepted_ciphers(server_conn_info, supported_tls_versions)
+
+    protocol_evaluation = TLSProtocolEvaluation.from_protocols_accepted(supported_tls_versions)
+    fs_evaluation = TLSForwardSecrecyParameterEvaluation.from_ciphers_accepted(ciphers_accepted)
+    cipher_evaluation = TLSCipherEvaluation.from_ciphers_accepted(ciphers_accepted)
     cipher_order_evaluation = test_cipher_order(
         server_conn_info,
         supported_tls_versions,
@@ -872,7 +820,7 @@ def check_web_tls(url, af_ip_pair=None, *args, **kwargs):
 
 def run_sslyze(
     scans: list[ServerScanRequest], connection_limit: int
-) -> Generator[tuple[list[CipherSuitesScanAttempt], ServerScanResult, TLSException | None]]:
+) -> Generator[tuple[ServerScanResult, TLSException | None]]:
     """
     Run a set of sslyze scans in parallel.
     Starts each scan request at the same time, and yields them as soon as they are finished.
@@ -886,28 +834,16 @@ def run_sslyze(
     for result in scanner.get_results():
         log.debug(f"sslyze scan for {result.server_location} result: {result.scan_status}")
         if result.scan_status == ServerScanStatusEnum.ERROR_NO_CONNECTIVITY:
-            yield [], result, TLSException(f"could not connect: {''.join(result.connectivity_error_trace.format())}")
+            yield result, TLSException(f"could not connect: {''.join(result.connectivity_error_trace.format())}")
             continue
-        all_suites = [
-            suite
-            for suite in (
-                result.scan_result.ssl_2_0_cipher_suites,
-                result.scan_result.ssl_3_0_cipher_suites,
-                result.scan_result.tls_1_0_cipher_suites,
-                result.scan_result.tls_1_1_cipher_suites,
-                result.scan_result.tls_1_2_cipher_suites,
-                result.scan_result.tls_1_3_cipher_suites,
-            )
-            if suite and suite.result
-        ]
         # Error is caught and returned here, as we may be running many scans.,
         # and don't want to abort all scans for one failure.
         try:
             raise_sslyze_errors(result)
         except TLSException as exc:
-            yield all_suites, result, exc
+            yield result, exc
             continue
-        yield all_suites, result, None
+        yield result, None
 
 
 def raise_sslyze_errors(result: ServerScanResult) -> None:
@@ -1114,6 +1050,212 @@ def _check_cipher_suite_available(tls_version: TlsVersionEnum, cipher_suite: Cip
         return True
     except ValueError:
         return False
+
+
+def tls_versions_for_cipher_detection(supported_tls_versions: list[TlsVersionEnum]) -> list[TlsVersionEnum]:
+    """
+    Pick the TLS versions for which to probe accepted ciphers.
+    For non-1.3 versions, only the highest supported one. Differences on lower versions
+    aren't in themselves interesting since the TLS version test already fails on those.
+    TLS 1.3 uses a much smaller cipher set, so it's probed separately when supported.
+    """
+    versions: list[TlsVersionEnum] = []
+    non_tls13 = [v for v in supported_tls_versions if v != TlsVersionEnum.TLS_1_3]
+    if non_tls13:
+        versions.append(max(non_tls13, key=lambda v: v.value))
+    if TlsVersionEnum.TLS_1_3 in supported_tls_versions:
+        versions.append(TlsVersionEnum.TLS_1_3)
+    return versions
+
+
+def find_accepted_ciphers(
+    server_conn_info: ServerConnectivityInfo,
+    supported_tls_versions: list[TlsVersionEnum],
+) -> list[CipherSuiteAcceptedByServer]:
+    """
+    Iterative-removal probe over the TLS versions worth checking: for each chunk of
+    candidates, offer them all in one ClientHello; on success, record the negotiated
+    cipher, drop it, retry. A chunk stops on any non-success outcome. If the server
+    negotiates a cipher we didn't offer, that's a protocol violation and aborts the
+    whole probe via TLSException. O(accepted + chunks) connections instead of
+    O(candidates).
+    """
+    hostname = server_conn_info.server_location.hostname
+    accepted: list[CipherSuiteAcceptedByServer] = []
+
+    for tls_version in tls_versions_for_cipher_detection(supported_tls_versions):
+        accepted_for_version: list[CipherSuiteAcceptedByServer] = []
+        candidate_count = 0
+
+        for use_legacy_openssl, candidates in _candidate_groups_for_version(tls_version):
+            candidate_count += len(candidates)
+            for chunk in _balanced_chunks(candidates, CIPHER_PROBE_CHUNK_SIZE):
+                accepted_for_version.extend(
+                    _test_accepted_ciphers(server_conn_info, tls_version, chunk, use_legacy_openssl)
+                )
+
+        log.info(
+            f"cipher probe on {hostname} for {tls_version.name} complete:"
+            f" {len(accepted_for_version)} cipher(s) accepted from {candidate_count} candidates"
+        )
+        accepted.extend(accepted_for_version)
+    return accepted
+
+
+# Cached wrapper: sslyze's requires_legacy_openssl instantiates a LegacySslClient on
+# every call, which is expensive when partitioning a full TLS 1.2 cipher list.
+@functools.cache
+def _requires_legacy_openssl(openssl_name: str) -> bool:
+    return WorkaroundForTls12ForCipherSuites.requires_legacy_openssl(openssl_name)
+
+
+def _candidate_groups_for_version(
+    tls_version: TlsVersionEnum,
+) -> list[tuple[bool, list[CipherSuite]]]:
+    """
+    Cipher candidates to probe for a given TLS version, grouped by whether they need
+    nassl's legacy OpenSSL build. Returns [(use_legacy_openssl, candidates), ...].
+
+    TLS 1.3 narrows to TLS_1_3_PROBE_CIPHERS (every other TLS 1.3 cipher is
+    good/sufficient). TLS 1.2 has to be partitioned per-cipher because weak ciphers
+    (CBC-SHA, RC4, etc.) are only offered by the legacy build. Older versions go
+    through the legacy build entirely.
+    """
+    if tls_version == TlsVersionEnum.TLS_1_3:
+        candidates = []
+        for name in TLS_1_3_PROBE_CIPHERS:
+            try:
+                candidates.append(CipherSuitesRepository.get_cipher_suite_with_openssl_name(tls_version, name))
+            except ValueError:
+                log.critical(f"TLS 1.3 probe cipher {name!r} not found in sslyze's repository, skipping")
+        return [(False, candidates)]
+
+    all_candidates = list(CipherSuitesRepository.get_all_cipher_suites(tls_version))
+
+    if tls_version == TlsVersionEnum.TLS_1_2:
+        legacy = [c for c in all_candidates if _requires_legacy_openssl(c.openssl_name)]
+        modern = [c for c in all_candidates if not _requires_legacy_openssl(c.openssl_name)]
+        return [(False, modern), (True, legacy)]
+
+    # TLS versions below 1.2 always need the legacy build.
+    return [(True, all_candidates)]
+
+
+def _balanced_chunks(items: list[CipherSuite], max_chunk_size: int) -> list[list[CipherSuite]]:
+    """
+    Split `items` into chunks of size at most `max_chunk_size`, interleaved across the
+    input: chunk 0 gets items [0, N, 2N, ...], chunk 1 gets [1, N+1, 2N+1, ...], etc.
+    Interleaving spreads accepted ciphers across chunks rather than letting them cluster
+    in one, so if a single chunk runs into a server-side quirk it doesn't take a
+    disproportionate share down with it.
+    """
+    if not items:
+        return []
+    n_chunks = math.ceil(len(items) / max_chunk_size)
+    return [items[i::n_chunks] for i in range(n_chunks)]
+
+
+def _test_accepted_ciphers(
+    server_conn_info: ServerConnectivityInfo,
+    tls_version: TlsVersionEnum,
+    candidates: list[CipherSuite],
+    use_legacy_openssl: bool,
+) -> list[CipherSuiteAcceptedByServer]:
+    accepted: list[CipherSuiteAcceptedByServer] = []
+    remaining = {c.openssl_name: c for c in candidates}
+
+    while remaining:
+        result = _attempt_connect_with_cipher_string(
+            server_conn_info, tls_version, ":".join(remaining), use_legacy_openssl=use_legacy_openssl
+        )
+        if result is None:
+            break
+
+        negotiated_name, ephemeral_key = result
+        negotiated = remaining.pop(negotiated_name, None)
+        if negotiated is None:
+            # Server negotiated a cipher outside the offered set, a protocol violation.
+            # Be loud so we know how often this happens.
+            raise TLSException(
+                f"cipher probe on {server_conn_info.server_location.hostname} for {tls_version.name}:"
+                f" server reported negotiated cipher {negotiated_name!r} not in offered list"
+            )
+        accepted.append(CipherSuiteAcceptedByServer(cipher_suite=negotiated, ephemeral_key=ephemeral_key))
+    return accepted
+
+
+# adapted from sslyze.plugins.openssl_cipher_suites._test_cipher_suite.connect_with_cipher_suite,
+# but extended to offer multiple ciphers in one Hello (vs sslyze's per-cipher probes)
+# and to make should_use_legacy_openssl a caller decision (vs sslyze's per-cipher dispatch).
+def _attempt_connect_with_cipher_string(
+    server_conn_info: ServerConnectivityInfo,
+    tls_version: TlsVersionEnum,
+    cipher_suite_str: str,
+    *,
+    use_legacy_openssl: bool,
+) -> tuple[str, Any] | None:
+    """
+    Try to connect with the cipher string (colon-joined). On success, return
+    (negotiated openssl cipher name, ephemeral key info). Returns None on benign
+    non-success outcomes (rejection, handshake failure, timeout). Raises TLSException
+    on nassl protocol anomalies (sslyze signalled an accepted handshake but exposed
+    no cipher name).
+    """
+    ssl_connection = server_conn_info.get_preconfigured_tls_connection(
+        override_tls_version=tls_version, should_use_legacy_openssl=use_legacy_openssl
+    )
+
+    try:
+        _set_cipher_suite_string(tls_version, cipher_suite_str, ssl_connection.ssl_client)
+        ssl_connection.connect()
+        negotiated_name = ssl_connection.ssl_client.get_current_cipher_name()
+        # get_ephemeral_key can raise for ciphers without an exposed ephemeral key
+        # (e.g. RSA key exchange). The handshake succeeded, so the cipher is accepted.
+        try:
+            ephemeral_key = ssl_connection.ssl_client.get_ephemeral_key()
+        except OpenSSLError:
+            ephemeral_key = None
+        return negotiated_name, ephemeral_key
+
+    except ServerTlsConfigurationNotSupported:
+        # sslyze refused to complete the handshake because the server's TLS configuration
+        # (typically weak DH parameters) is below its minimum thresholds. The cipher itself
+        # was accepted, so report it with no ephemeral key info. sslyze does the same by default
+        negotiated_name = ssl_connection.ssl_client.get_current_cipher_name()
+        if not negotiated_name:
+            raise TLSException(
+                f"ServerTlsConfigurationNotSupported on {server_conn_info.server_location.hostname}"
+                f" for {tls_version.name} but nassl exposed no cipher name"
+            )
+        return negotiated_name, None
+
+    except ClientCertificateRequested:
+        # In both TLS 1.2 (RFC5246 7.3) and TLS 1.3 (RFC8446 4.3.2) the server's cipher
+        # choice is carried in ServerHello, which arrives before CertificateRequest; the
+        # cipher is therefore already negotiated when this raises.
+        negotiated_name = ssl_connection.ssl_client.get_current_cipher_name()
+        if not negotiated_name:
+            raise TLSException(
+                f"ClientCertificateRequested on {server_conn_info.server_location.hostname}"
+                f" for {tls_version.name} but nassl exposed no cipher name"
+            )
+        try:
+            ephemeral_key = ssl_connection.ssl_client.get_ephemeral_key()
+        except OpenSSLError:
+            ephemeral_key = None
+        return negotiated_name, ephemeral_key
+
+    except (ConnectionToServerFailed, OpenSSLError, TlsHandshakeTimedOut, ValueError):
+        return None
+
+    except Exception as exc:
+        log.warning(
+            f"cipher probe on {server_conn_info.server_location.hostname} for {tls_version.name}"
+            f" hit an unexpected error, stopping chunk: {exc!r}"
+        )
+        return None
+    finally:
+        ssl_connection.close()
 
 
 def check_supported_tls_versions(
