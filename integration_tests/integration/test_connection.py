@@ -9,9 +9,9 @@ import requests
 import re
 
 ALL_CONNECTION_PROBES = {"ipv6", "resolver"}
-TEST_CONNECTION_EXPECTED_SCORE = 100.0
+TEST_CONNECTION_EXPECTED_SCORE = 100
 # TODO: improve test environment to allow 100% score result
-TEST_CONNECTION_EXPECTED_SCORE = 50.0
+TEST_CONNECTION_EXPECTED_SCORE = 50
 
 
 @pytest.mark.skip(reason="connection test removed from UI in this fork")
