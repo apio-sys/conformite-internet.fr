@@ -206,6 +206,9 @@ msgstr "Votre domaine email :"
 msgid "base test mail label"
 msgstr "Testez votre domaine email"
 
+msgid "base test mail placeholder"
+msgstr "domaine.fr"
+
 msgid "base test mail text"
 msgstr "Adresse IP moderne ? Anti-hameçonnage ? Transport sécurisé ? Autorisation du routage ?"
 
@@ -247,6 +250,9 @@ msgstr "Le nom de domaine de votre site :"
 
 msgid "base test website label"
 msgstr "Testez votre site web"
+
+msgid "base test website placeholder"
+msgstr "www.domaine.fr"
 
 msgid "base test website text"
 msgstr ""
